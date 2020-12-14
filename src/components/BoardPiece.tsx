@@ -1,5 +1,5 @@
 import React from "react";
-import { Game, Piece } from "../game/Game";
+import { Game, Piece, Position } from "../game/Game";
 import { useDrag } from "react-dnd";
 
 type PlayerColor = "w" | "r" | "b" | "g" | "y";
@@ -26,10 +26,11 @@ const PIECE_CLASSES = {
 function BoardPiece(props: {
   game: Game;
   piece: Piece;
-  onBeginDrag: (piece: Piece) => void;
-  onEndDrag: (piece: Piece) => void;
+  position: Position;
+  onBeginDrag: (position: Position) => void;
+  onEndDrag: (position: Position) => void;
 }) {
-  const { piece } = props;
+  const { piece, position } = props;
 
   const [{ opacity }, dragRef] = useDrag({
     item: { type: "piece", piece },
@@ -37,10 +38,10 @@ function BoardPiece(props: {
       opacity: monitor.isDragging() ? 0.5 : 1,
     }),
     begin: () => {
-      props.onBeginDrag(piece);
+      props.onBeginDrag(position);
     },
     end: () => {
-      props.onEndDrag(piece);
+      props.onEndDrag(position);
     },
   });
 

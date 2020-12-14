@@ -1,3 +1,8 @@
+.board {
+  width: 704px;
+  height: 704px;
+}
+
 .square {
   display: block;
   float: left;
@@ -15,6 +20,10 @@
 
 .square.b {
   background: #333333;
+}
+
+.square.allow-move {
+  background: green;
 }
 
 .square .piece {
