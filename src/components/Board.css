@@ -1,0 +1,86 @@
+.square {
+  display: block;
+  float: left;
+  width: 64px;
+  height: 64px;
+}
+
+.square.n {
+  background: #aaaaaa;
+}
+
+.square.w {
+  background: #dddddd;
+}
+
+.square.b {
+  background: #333333;
+}
+
+.square .piece {
+  display: table-cell;
+  width: 64px;
+  height: 64px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 30px;
+  -webkit-text-stroke-width: 1px;
+}
+
+.square.b .piece.white {
+  -webkit-text-stroke-width: 0px;
+}
+.square.w .piece.white {
+  -webkit-text-stroke-color: black;
+}
+.square .piece.white {
+  color: white;
+}
+
+.square.b .piece.black {
+  -webkit-text-stroke-color: white;
+}
+.square.w .piece.black {
+  -webkit-text-stroke-width: 0px;
+}
+.square .piece.black {
+  color: black;
+}
+
+.square.b .piece.red {
+  -webkit-text-stroke-color: white;
+}
+.square.w .piece.red {
+  -webkit-text-stroke-color: black;
+}
+.square .piece.red {
+  color: red;
+}
+
+.square.b .piece.green {
+  -webkit-text-stroke-color: white;
+}
+.square.w .piece.green {
+  -webkit-text-stroke-color: black;
+}
+.square .piece.green {
+  color: green;
+}
+
+.square.b .piece.yellow {
+  -webkit-text-stroke-width: 0px;
+}
+.square.w .piece.yellow {
+  -webkit-text-stroke-color: black;
+}
+.square .piece.yellow {
+  color: yellow;
+}
+
+.square .piece-field.turn {
+  cursor: grab;
+}
+
+.square .piece-field.turn:hover {
+  background: #ccffcc;
+}
