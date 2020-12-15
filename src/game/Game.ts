@@ -1,3 +1,5 @@
+import { Pawn } from "./Pawn";
+
 export type SquareType = "w" | "b" | "n";
 
 export type Player = "w" | "r" | "b" | "g" | "y";
@@ -82,28 +84,26 @@ export class Game {
     ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
   ];
 
-  public getPossibleMoves(position: Position): Position[] {
-    const piece = this.getSquarePiece(position);
+  public static getPossibleMoves(
+    position: Position,
+    state: GameState
+  ): Position[] {
+    const piece = Game.getSquarePiece(position, state);
     switch (piece[1]) {
-      case 'P':
-        return this.possibleMovesPawn(position)
+      case "P":
+        return Pawn.getPossibleMoves(position, state);
     }
-    throw new Error('Invalid piece')
+    throw new Error("Invalid piece");
   }
 
-  public getTurn(): Player {
-    return this.getState().playerTurn;
-  }
-
-  public getSquarePiece(position: Position) {
+  public static getSquarePiece(position: Position, state: GameState) {
     const { top, left } = position;
-    if (top < 0 || top >= this.board.length) {
+    if (typeof state.board[top] === undefined) {
       throw new Error("Invalid top coordinate value");
     }
-    if (left < 0 || left >= this.board[top].length) {
+    if (typeof state.board[top][left] === undefined) {
       throw new Error("Invalid left coordinate value");
     }
-    const state = this.getState();
     return state.board[top][left];
   }
 
@@ -138,8 +138,8 @@ export class Game {
     };
     return this.history.reduce(
       (prevState: GameState, move: GameMove, moveCount: number) => {
-        this.validateMove(move, prevState);
-        const chessNotation = this.moveInChessNotation(move, prevState);
+        Game.validateMove(move, prevState);
+        const chessNotation = Game.moveInChessNotation(move, prevState);
         // move
         prevState.board[move.to.top][move.to.left] =
           prevState.board[move.from.top][move.from.left];
@@ -171,60 +171,20 @@ export class Game {
     );
   }
 
-  private possibleMovesPawn(position: Position): Position[] {
-    const state = this.getState();
-    const piece = this.getSquarePiece(position);
-    if (piece[1] !== "P") {
-      throw new Error("Invalid piece");
-    }
-    if (piece[0] !== state.playerTurn) {
-      throw new Error("Player is not on turn");
-    }
-    const moves: Position[] = [];
-    switch (piece[0]) {
-      case "b": {
-        if (
-          !this.getSquarePiece({
-            left: position.left,
-            top: position.top - 1,
-          })
-        ) {
-          moves.push({
-            left: position.left,
-            top: position.top - 1,
-          });
-        }
-        if (
-          !this.getSquarePiece({
-            left: position.left,
-            top: position.top - 2,
-          })
-        ) {
-          moves.push({
-            left: position.left,
-            top: position.top - 2,
-          });
-        }
-        break;
-      }
-    }
-    return moves;
-  }
-
-  private moveInChessNotation(move: GameMove, state: GameState) {
+  public static moveInChessNotation(move: GameMove, state: GameState) {
     const piece = state.board[move.from.top][move.from.left];
     //  TODO: figure taken
     //  TODO: promotion
     return (
       piece[1].replace("P", "") +
       String.fromCharCode(94 + move.from.left) +
-      (this.board.length - move.from.top) +
+      (state.board.length - move.from.top) +
       String.fromCharCode(94 + move.to.left) +
-      (this.board.length - move.to.top)
+      (state.board.length - move.to.top)
     );
   }
 
-  private validateMove(move: GameMove, state: GameState) {
+  public static validateMove(move: GameMove, state: GameState) {
     //  check is valid piece
     const piece = state.board[move.from.top][move.from.left];
     if (piece === "") {

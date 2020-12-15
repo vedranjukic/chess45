@@ -10,7 +10,7 @@ function Board(props: { game: Game }) {
   const [possibleMoves, setPossibleMoves] = useState<Position[]>([]);
 
   const handleBeginDrag = (position: Position) => {
-    setPossibleMoves(game.getPossibleMoves(position));
+    setPossibleMoves(Game.getPossibleMoves(position, game.getState()));
   };
 
   const handleEndDrag = (position: Position) => {
@@ -18,7 +18,7 @@ function Board(props: { game: Game }) {
   };
 
   const drawPiece = (position: Position) => {
-    const piece = game.getSquarePiece(position);
+    const piece = Game.getSquarePiece(position, game.getState());
     if (piece === "") {
       return <div />;
     }
