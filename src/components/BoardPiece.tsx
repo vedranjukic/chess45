@@ -1,6 +1,6 @@
 import React from "react";
 import { Game, Piece, Position } from "../game/Game";
-import { useDrag } from "react-dnd";
+import { Draggable } from "react-beautiful-dnd";
 
 type PlayerColor = "w" | "r" | "b" | "g" | "y";
 type PieceClass = "P" | "K" | "N" | "B" | "R" | "Q" | "G";
@@ -27,31 +27,39 @@ function BoardPiece(props: {
   game: Game;
   piece: Piece;
   position: Position;
-  onBeginDrag: (position: Position) => void;
-  onEndDrag: (position: Position) => void;
 }) {
   const { piece, position } = props;
+  const id = position.top + "," + position.left;
 
-  const [{ opacity }, dragRef] = useDrag({
-    item: { type: "piece", piece },
-    collect: (monitor) => ({
-      opacity: monitor.isDragging() ? 0.5 : 1,
-    }),
-    begin: () => {
-      props.onBeginDrag(position);
-    },
-    end: () => {
-      props.onEndDrag(position);
-    },
-  });
+  const movable = piece[0] === props.game.getState().playerTurn
 
-  return (
-    <div
-      ref={dragRef}
-      className={`piece-field ${
-        piece[0] === props.game.getState().playerTurn ? "turn" : ""
-      }`}
-    >
+  if (movable) {
+    return (
+      <Draggable
+        key={id}
+        draggableId={id}
+        index={position.top * 100 + position.left}
+      >
+        {(provided) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            className={`piece ${PLAYER_COLORS[piece[0] as PlayerColor]} ${
+              PIECE_CLASSES[piece[1] as PieceClass]
+            } ${movable ? "turn" : ""}`}
+          >
+            <i
+              className={`fas fa-chess-${
+                PIECE_CLASSES[piece[1] as PieceClass]
+              }`}
+            />
+          </div>
+        )}
+      </Draggable>
+    );
+  } else {
+    return (
       <div
         className={`piece ${PLAYER_COLORS[piece[0] as PlayerColor]} ${
           PIECE_CLASSES[piece[1] as PieceClass]
@@ -59,11 +67,10 @@ function BoardPiece(props: {
       >
         <i
           className={`fas fa-chess-${PIECE_CLASSES[piece[1] as PieceClass]}`}
-          style={{ opacity }}
         />
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 export default BoardPiece;

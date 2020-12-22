@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import "./Board.css";
 import { Game, Position } from "../game/Game";
 import BoardPiece from "./BoardPiece";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import {
+  DragDropContext,
+  Droppable,
+  DroppableProvided,
+} from "react-beautiful-dnd";
 
 function Board(props: { game: Game }) {
   const { game } = props;
@@ -13,8 +16,14 @@ function Board(props: { game: Game }) {
     setPossibleMoves(Game.getPossibleMoves(position, game.getState()));
   };
 
-  const handleEndDrag = (position: Position) => {
-    setPossibleMoves([]);
+  const handleEndDrag = (from: Position, to: Position) => {
+    if (possibleMoves.find(possibleMove => possibleMove.left === to.left && possibleMove.top === to.top)) {
+      game.makeMove({
+        from,
+        to
+      })
+    }
+    setPossibleMoves([])
   };
 
   const drawPiece = (position: Position) => {
@@ -22,30 +31,32 @@ function Board(props: { game: Game }) {
     if (piece === "") {
       return <div />;
     }
-    return (
-      <BoardPiece
-        game={game}
-        piece={piece}
-        position={position}
-        onBeginDrag={handleBeginDrag}
-        onEndDrag={handleEndDrag}
-      />
-    );
+    return <BoardPiece game={game} piece={piece} position={position} />;
   };
 
   const drawSquare = (position: Position) => {
     const { top, left } = position;
+    const possibleMove = possibleMoves.find(
+      (move) => move.left === left && move.top === top
+    );
     return (
-      <div
-        className={`square ${props.game.getSquareType(position)} ${
-          possibleMoves.find((move) => move.left === left && move.top === top)
-            ? "allow-move"
-            : ""
-        }`}
-        key={top * 100 + left}
+      <Droppable
+        key={top * 100 + "," + left}
+        droppableId={position.top + "," + position.left}
       >
-        {drawPiece(position)}
-      </div>
+        {(provided: DroppableProvided) => (
+          <div
+            key={top * 100 + "," + left}
+            className={`square ${props.game.getSquareType(position)} ${
+              possibleMove ? "allow-move" : ""
+            }`}
+            ref={provided ? provided.innerRef : undefined}
+          >
+            {drawPiece(position)}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
     );
   };
 
@@ -69,9 +80,28 @@ function Board(props: { game: Game }) {
   }
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DragDropContext
+      onDragEnd={(result, provided) => {
+        const [sourceTop, sourceLeft] = result.source.droppableId.split(",");
+        if (!result.destination) {
+          return
+        }
+        const [
+          destinationTop,
+          destinationLeft,
+        ] = result.destination.droppableId.split(",");
+        handleEndDrag(
+          { top: Number(sourceTop), left: Number(sourceLeft) },
+          { top: Number(destinationTop), left: Number(destinationLeft) }
+        );
+      }}
+      onDragStart={(initial, provider) => {
+        const [top, left] = initial.draggableId.split(",");
+        handleBeginDrag({ top: Number(top), left: Number(left) });
+      }}
+    >
       <div className="board">{rows}</div>
-    </DndProvider>
+    </DragDropContext>
   );
 }
 

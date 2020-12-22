@@ -14,6 +14,15 @@ export class Pawn {
       case "b": {
         return this.calcMoves(position, state, 0, -1);
       }
+      case "w": {
+        return this.calcMoves(position, state, 0, 1);
+      }
+      case "r": {
+        return this.calcMoves(position, state, -1, 0);
+      }
+      case "g": {
+        return this.calcMoves(position, state, 1, 0);
+      }
     }
     return moves;
   }

@@ -1,3 +1,4 @@
+import { Guard } from "./Guard";
 import { Pawn } from "./Pawn";
 
 export type SquareType = "w" | "b" | "n";
@@ -58,7 +59,7 @@ export class Game {
         top: 2,
         left: 5,
       },
-    },
+    }/*,
     {
       from: {
         top: 4,
@@ -68,7 +69,7 @@ export class Game {
         top: 4,
         left: 8,
       },
-    },
+    },*/
   ];
   private readonly board: SquareType[][] = [
     ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
@@ -92,6 +93,8 @@ export class Game {
     switch (piece[1]) {
       case "P":
         return Pawn.getPossibleMoves(position, state);
+      case "G":
+        return Guard.getPossibleMoves(position, state);
     }
     throw new Error("Invalid piece");
   }
@@ -184,6 +187,11 @@ export class Game {
     );
   }
 
+  public makeMove(move: GameMove) {
+    Game.validateMove(move, this.getState());
+    this.history.push(move);
+  }
+
   public static validateMove(move: GameMove, state: GameState) {
     //  check is valid piece
     const piece = state.board[move.from.top][move.from.left];
@@ -194,5 +202,6 @@ export class Game {
     if (piece[0] !== state.playerTurn) {
       throw new Error("Can not move other player pieces");
     }
+    //  TODO: check get Possible Moves
   }
 }
