@@ -1,7 +1,13 @@
-import { Game } from "../game/Game";
+import { useState } from "react";
+import { Game, GameState } from "../game/Game";
 
 function History(props: { game: Game }) {
-  return <div>{props.game.getState().moves.join(', ')}</div>;
+  const [state, setGameState] = useState<GameState>(props.game.getState());
+
+  props.game.on("move", (move) => {
+    setGameState(props.game.getState());
+  });
+  return <div>{state.moves.join(", ")}</div>;
 }
 
 export default History;

@@ -1,3 +1,5 @@
+import { createNanoEvents, Emitter, Unsubscribe } from "nanoevents";
+
 import { Guard } from "./Guard";
 import { Pawn } from "./Pawn";
 
@@ -48,6 +50,10 @@ export type GameState = {
   moves: string[];
 };
 
+export interface GameEvents {
+  move: (move: GameMove) => void;
+}
+
 export class Game {
   private readonly history: History = [
     {
@@ -59,7 +65,7 @@ export class Game {
         top: 2,
         left: 5,
       },
-    }/*,
+    } /*,
     {
       from: {
         top: 4,
@@ -69,7 +75,7 @@ export class Game {
         top: 4,
         left: 8,
       },
-    },*/
+    },*/,
   ];
   private readonly board: SquareType[][] = [
     ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
@@ -84,6 +90,12 @@ export class Game {
     ["n", "n", "n", "w", "b", "w", "b", "w", "n", "n", "n"],
     ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
   ];
+
+  private readonly emitter = createNanoEvents<GameEvents>();
+
+  public on<E extends keyof GameEvents>(event: E, callback: GameEvents[E]) {
+    return this.emitter.on(event, callback);
+  }
 
   public static getPossibleMoves(
     position: Position,
@@ -190,6 +202,7 @@ export class Game {
   public makeMove(move: GameMove) {
     Game.validateMove(move, this.getState());
     this.history.push(move);
+    this.emitter.emit("move", move);
   }
 
   public static validateMove(move: GameMove, state: GameState) {
