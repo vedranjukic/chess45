@@ -42,7 +42,9 @@ export class Pawn {
     if (!Game.getSquarePiece(moveOneFront, state)) {
       moves.push(moveOneFront);
     }
+    /*
     //  two step forwad
+    //  TODO: check initial position
     const moveTwoFront = {
       left: position.left + moveHorizontal * 2,
       top: position.top + moveVertical * 2,
@@ -50,10 +52,11 @@ export class Pawn {
     if (!Game.getSquarePiece(moveTwoFront, state)) {
       moves.push(moveTwoFront);
     }
+    */
     //  take left
     const moveTakeLeft = {
       left: position.left + moveHorizontal + (moveHorizontal === 0 ? -1 : 0),
-      top: position.top + moveHorizontal + (moveHorizontal === 0 ? -1 : 0),
+      top: position.top + moveVertical + (moveVertical === 0 ? -1 : 0),
     };
     if (Game.getSquarePiece(moveTakeLeft, state) && Game.getSquarePiece(moveTakeLeft, state)[0] !== state.playerTurn) {
       moves.push(moveTakeLeft);

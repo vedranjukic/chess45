@@ -1,4 +1,5 @@
 import { createNanoEvents } from "nanoevents";
+import { Bishop } from "./Bishop";
 
 import { Guard } from "./Guard";
 import { Pawn } from "./Pawn";
@@ -111,6 +112,8 @@ export class Game {
           return Pawn.getPossibleMoves(position, state);
         case "G":
           return Guard.getPossibleMoves(position, state);
+        case "B":
+          return Bishop.getPossibleMoves(position, state);
         case "R":
           return Rook.getPossibleMoves(position, state);
         case "Q":

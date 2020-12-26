@@ -1,3 +1,4 @@
+import { Bishop } from "./Bishop";
 import { Game, GameState, Position } from "./Game";
 import { Rook } from "./Rook";
 
@@ -16,7 +17,11 @@ export class Queen {
       Rook.getMovesN(position, state),
       Rook.getMovesS(position, state),
       Rook.getMovesE(position, state),
-      Rook.getMovesW(position, state)
+      Rook.getMovesW(position, state),
+      Bishop.getMovesNE(position, state),
+      Bishop.getMovesSE(position, state),
+      Bishop.getMovesNW(position, state),
+      Bishop.getMovesSW(position, state)
     );
   }
 }
