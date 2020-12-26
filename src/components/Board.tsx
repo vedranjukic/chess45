@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./Board.css";
-import { Game, Position } from "../game/Game";
+import { Game, GameState, Position } from "../game/Game";
 import BoardPiece from "./BoardPiece";
 import {
   DragDropContext,
@@ -10,10 +10,16 @@ import {
 
 function Board(props: { game: Game }) {
   const { game } = props;
+  const [state, setGameState] = useState<GameState>(game.getState());
+
+  props.game.on("move", (move) => {
+    setGameState(props.game.getState());
+  });
+
   const [possibleMoves, setPossibleMoves] = useState<Position[]>([]);
 
   const handleBeginDrag = (position: Position) => {
-    setPossibleMoves(Game.getPossibleMoves(position, game.getState()));
+    setPossibleMoves(Game.getPossibleMoves(position, state));
   };
 
   const handleEndDrag = (from: Position, to: Position) => {
@@ -27,7 +33,7 @@ function Board(props: { game: Game }) {
   };
 
   const drawPiece = (position: Position) => {
-    const piece = Game.getSquarePiece(position, game.getState());
+    const piece = Game.getSquarePiece(position, state);
     if (piece === "") {
       return <div />;
     }
@@ -47,7 +53,7 @@ function Board(props: { game: Game }) {
         {(provided: DroppableProvided) => (
           <div
             key={top * 100 + "," + left}
-            className={`square ${props.game.getSquareType(position)} ${
+            className={`square ${Game.getSquareType(position)} ${
               possibleMove ? "allow-move" : ""
             }`}
             ref={provided ? provided.innerRef : undefined}

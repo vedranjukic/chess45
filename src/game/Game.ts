@@ -1,9 +1,25 @@
-import { createNanoEvents, Emitter, Unsubscribe } from "nanoevents";
+import { createNanoEvents } from "nanoevents";
 
 import { Guard } from "./Guard";
 import { Pawn } from "./Pawn";
+import { Queen } from "./Queen";
+import { Rook } from "./Rook";
 
-export type SquareType = "w" | "b" | "n";
+export const GameBoard: SquareType[][] = [
+  ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
+  ["n", "n", "n", "w", "b", "w", "b", "w", "n", "n", "n"],
+  ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
+  ["b", "w", "b", "w", "b", "w", "b", "w", "b", "w", "b"],
+  ["w", "b", "w", "b", "w", "b", "w", "b", "w", "b", "w"],
+  ["b", "w", "b", "w", "b", "y", "b", "w", "b", "w", "b"],
+  ["w", "b", "w", "b", "w", "b", "w", "b", "w", "b", "w"],
+  ["b", "w", "b", "w", "b", "w", "b", "w", "b", "w", "b"],
+  ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
+  ["n", "n", "n", "w", "b", "w", "b", "w", "n", "n", "n"],
+  ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
+];
+
+export type SquareType = "w" | "b" | "n" | "y";
 
 export type Player = "w" | "r" | "b" | "g" | "y";
 
@@ -77,19 +93,6 @@ export class Game {
       },
     },*/,
   ];
-  private readonly board: SquareType[][] = [
-    ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
-    ["n", "n", "n", "w", "b", "w", "b", "w", "n", "n", "n"],
-    ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
-    ["b", "w", "b", "w", "b", "w", "b", "w", "b", "w", "b"],
-    ["w", "b", "w", "b", "w", "b", "w", "b", "w", "b", "w"],
-    ["b", "w", "b", "w", "b", "w", "b", "w", "b", "w", "b"],
-    ["w", "b", "w", "b", "w", "b", "w", "b", "w", "b", "w"],
-    ["b", "w", "b", "w", "b", "w", "b", "w", "b", "w", "b"],
-    ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
-    ["n", "n", "n", "w", "b", "w", "b", "w", "n", "n", "n"],
-    ["n", "n", "n", "b", "w", "b", "w", "b", "n", "n", "n"],
-  ];
 
   private readonly emitter = createNanoEvents<GameEvents>();
 
@@ -102,13 +105,28 @@ export class Game {
     state: GameState
   ): Position[] {
     const piece = Game.getSquarePiece(position, state);
-    switch (piece[1]) {
-      case "P":
-        return Pawn.getPossibleMoves(position, state);
-      case "G":
-        return Guard.getPossibleMoves(position, state);
-    }
-    throw new Error("Invalid piece");
+    const allMoves = (() => {
+      switch (piece[1]) {
+        case "P":
+          return Pawn.getPossibleMoves(position, state);
+        case "G":
+          return Guard.getPossibleMoves(position, state);
+        case "R":
+          return Rook.getPossibleMoves(position, state);
+        case "Q":
+          return Queen.getPossibleMoves(position, state);
+      }
+      throw new Error("Invalid piece");
+    })();
+    const filterOutOfBoardMoves = allMoves.filter((moveTo) => {
+      const squareType = Game.getSquareType(moveTo);
+      return squareType && squareType !== "n";
+    });
+    const filterOwnPiecesMoves = filterOutOfBoardMoves.filter((moveTo) => {
+      const movePiece = Game.getSquarePiece(moveTo, state);
+      return movePiece[0] !== state.playerTurn;
+    });
+    return filterOwnPiecesMoves;
   }
 
   public static getSquarePiece(position: Position, state: GameState) {
@@ -122,15 +140,15 @@ export class Game {
     return state.board[top][left];
   }
 
-  public getSquareType(position: Position): SquareType {
+  public static getSquareType(position: Position): SquareType {
     const { top, left } = position;
-    if (top < 0 || top >= this.board.length) {
+    if (top < 0 || top >= GameBoard.length) {
       throw new Error("Invalid top coordinate value");
     }
-    if (left < 0 || left >= this.board[top].length) {
+    if (left < 0 || left >= GameBoard[top].length) {
       throw new Error("Invalid left coordinate value");
     }
-    return this.board[top][left];
+    return GameBoard[top][left];
   }
 
   public getState(): GameState {

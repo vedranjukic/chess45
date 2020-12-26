@@ -10,18 +10,47 @@ export class Guard {
       throw new Error("Player is not on turn");
     }
 
-    const moves: Position[] = [];
-    for (let top = position.top - 1; top <= position.top + 1; top++) {
-        for (let left = position.left - 1; left <= position.left + 1; left++) {
-            if (top === position.top && left === position.left) {
-                continue
-            }
-            moves.push({
-                left,
-                top
-            })
-        }
-    }
-    return moves;
+    const moves: Position[] = [
+      {
+        top: position.top - 1,
+        left: position.left,
+      },
+      {
+        top: position.top,
+        left: position.left + 1,
+      },
+      {
+        top: position.top + 1,
+        left: position.left,
+      },
+      {
+        top: position.top,
+        left: position.left - 1,
+      },
+    ];
+
+    const takeMoves: Position[] = [
+      {
+        top: position.top - 1,
+        left: position.left - 1,
+      },
+      {
+        top: position.top + 1,
+        left: position.left + 1,
+      },
+      {
+        top: position.top + 1,
+        left: position.left - 1,
+      },
+      {
+        top: position.top + 1,
+        left: position.left - 1,
+      },
+    ].filter((takeMove) => {
+      const piece = Game.getSquarePiece(takeMove, state);
+      return piece && piece[0] !== state.playerTurn;
+    });
+
+    return moves.concat(takeMoves);
   }
 }
