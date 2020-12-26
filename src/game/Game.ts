@@ -2,6 +2,8 @@ import { createNanoEvents } from "nanoevents";
 import { Bishop } from "./Bishop";
 
 import { Guard } from "./Guard";
+import { King } from "./King";
+import { Knight } from "./Knight";
 import { Pawn } from "./Pawn";
 import { Queen } from "./Queen";
 import { Rook } from "./Rook";
@@ -114,17 +116,25 @@ export class Game {
           return Guard.getPossibleMoves(position, state);
         case "B":
           return Bishop.getPossibleMoves(position, state);
+        case "N":
+          return Knight.getPossibleMoves(position, state);
         case "R":
           return Rook.getPossibleMoves(position, state);
         case "Q":
           return Queen.getPossibleMoves(position, state);
+        case "K":
+          return King.getPossibleMoves(position, state);
       }
       throw new Error("Invalid piece");
     })();
-    const filterOutOfBoardMoves = allMoves.filter((moveTo) => {
-      const squareType = Game.getSquareType(moveTo);
-      return squareType && squareType !== "n";
-    });
+    const filterOutOfBoardMoves = allMoves.filter(
+      (moveTo) =>
+        moveTo.left >= 0 &&
+        moveTo.top >= 0 &&
+        moveTo.left < GameBoard.length &&
+        moveTo.top < GameBoard.length &&
+        Game.getSquareType(moveTo) !== "n"
+    );
     const filterOwnPiecesMoves = filterOutOfBoardMoves.filter((moveTo) => {
       const movePiece = Game.getSquarePiece(moveTo, state);
       return movePiece[0] !== state.playerTurn;

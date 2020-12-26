@@ -1,9 +1,9 @@
 import { Game, GameState, Position } from "./Game";
 
-export class Guard {
+export class King {
   static getPossibleMoves(position: Position, state: GameState) {
     const piece = Game.getSquarePiece(position, state);
-    if (piece[1] !== "G") {
+    if (piece[1] !== "K") {
       throw new Error("Invalid piece");
     }
     if (piece[0] !== state.playerTurn) {
@@ -27,30 +27,24 @@ export class Guard {
         top: position.top,
         left: position.left - 1,
       },
+      {
+        top: position.top - 1,
+        left: position.left - 1,
+      },
+      {
+        top: position.top + 1,
+        left: position.left + 1,
+      },
+      {
+        top: position.top + 1,
+        left: position.left - 1,
+      },
+      {
+        top: position.top - 1,
+        left: position.left + 1,
+      },
     ];
 
-    const takeMoves: Position[] = [
-      {
-        top: position.top - 1,
-        left: position.left - 1,
-      },
-      {
-        top: position.top + 1,
-        left: position.left + 1,
-      },
-      {
-        top: position.top + 1,
-        left: position.left - 1,
-      },
-      {
-        top: position.top - 1,
-        left: position.left + 1,
-      },
-    ].filter((takeMove) => {
-      const piece = Game.getSquarePiece(takeMove, state);
-      return piece && piece[0] !== state.playerTurn;
-    });
-
-    return moves.concat(takeMoves);
+    return moves;
   }
 }
