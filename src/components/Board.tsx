@@ -22,14 +22,23 @@ function Board(props: { game: Game }) {
     setPossibleMoves(Game.getPossibleMoves(position, state));
   };
 
+  const handleCancelDrag = () => {
+    setPossibleMoves([]);
+  }
+
   const handleEndDrag = (from: Position, to: Position) => {
-    if (possibleMoves.find(possibleMove => possibleMove.left === to.left && possibleMove.top === to.top)) {
+    if (
+      possibleMoves.find(
+        (possibleMove) =>
+          possibleMove.left === to.left && possibleMove.top === to.top
+      )
+    ) {
       game.makeMove({
         from,
-        to
-      })
+        to,
+      });
     }
-    setPossibleMoves([])
+    setPossibleMoves([]);
   };
 
   const drawPiece = (position: Position) => {
@@ -49,6 +58,7 @@ function Board(props: { game: Game }) {
       <Droppable
         key={top * 100 + "," + left}
         droppableId={position.top + "," + position.left}
+        isDropDisabled={!possibleMove}
       >
         {(provided: DroppableProvided) => (
           <div
@@ -90,7 +100,8 @@ function Board(props: { game: Game }) {
       onDragEnd={(result, provided) => {
         const [sourceTop, sourceLeft] = result.source.droppableId.split(",");
         if (!result.destination) {
-          return
+          handleCancelDrag();
+          return;
         }
         const [
           destinationTop,

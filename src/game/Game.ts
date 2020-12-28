@@ -186,10 +186,21 @@ export class Game {
       (prevState: GameState, move: GameMove, moveCount: number) => {
         Game.validateMove(move, prevState);
         const chessNotation = Game.moveInChessNotation(move, prevState);
+        //  queen takes
+        //  captured piece is converted to queen's guard and moved to yellow square
+        const queenPawnTake =
+          prevState.board[move.from.top][move.from.left][1] === "Q";
+
         // move
         prevState.board[move.to.top][move.to.left] =
           prevState.board[move.from.top][move.from.left];
         prevState.board[move.from.top][move.from.left] = "";
+
+        //  queen takes pawn - convert captured piece to queens guard
+        if (queenPawnTake) {
+          prevState.board[5][5] = "yG";
+        }
+
         //  turn
         const nextTurn = (() => {
           switch (prevState.playerTurn) {
