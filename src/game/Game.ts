@@ -61,7 +61,7 @@ export type GameMove = {
   to: Position;
 };
 
-type History = GameMove[];
+export type GameHistory = GameMove[];
 
 export type GameState = {
   board: Piece[][];
@@ -74,28 +74,7 @@ export interface GameEvents {
 }
 
 export class Game {
-  private readonly history: History = [
-    {
-      from: {
-        top: 1,
-        left: 5,
-      },
-      to: {
-        top: 2,
-        left: 5,
-      },
-    } /*,
-    {
-      from: {
-        top: 4,
-        left: 9,
-      },
-      to: {
-        top: 4,
-        left: 8,
-      },
-    },*/,
-  ];
+  constructor(private readonly history: GameHistory = []) {}
 
   private readonly emitter = createNanoEvents<GameEvents>();
 
@@ -164,6 +143,10 @@ export class Game {
     return GameBoard[top][left];
   }
 
+  public getHistory(): GameHistory {
+    return this.history;
+  }
+
   public getState(): GameState {
     const initialState: GameState = {
       board: [
@@ -174,7 +157,7 @@ export class Game {
         ["gB", "gP", "", "", "", "yG", "", "", "", "rP", "rN"],
         ["gK", "gP", "", "", "yG", "yQ", "yG", "", "", "rP", "rK"],
         ["gN", "gP", "", "", "", "yG", "", "", "", "rP", "rB"],
-        ["gR", "gP", "", "", "", "", "", "", "", "rP", "rK"],
+        ["gR", "gP", "", "", "", "", "", "", "", "rP", "rR"],
         ["", "", "", "", "", "", "", "", "", "", ""],
         ["", "", "", "bP", "bP", "bP", "bP", "bP", "", "", ""],
         ["", "", "", "bR", "bB", "bK", "bN", "bR", "", "", ""],
@@ -191,36 +174,40 @@ export class Game {
         const queenPawnTake =
           prevState.board[move.from.top][move.from.left][1] === "Q";
 
+        //  king/queen is taken
+        switch (prevState.board[move.to.top][move.to.left][1]) {
+          case "K":
+          case "Q": {
+            const playerLost =
+              prevState.board[move.to.top][move.to.left][0];
+            prevState.board.forEach((row, rowIndex) => {
+              prevState.board[rowIndex].forEach((col, colIndex) => {
+                if (
+                  prevState.board[rowIndex][colIndex] &&
+                  prevState.board[rowIndex][colIndex][0] === playerLost
+                ) {
+                  prevState.board[rowIndex][colIndex] = "";
+                }
+              });
+            });
+            break;
+          }
+        }
+
         // move
         prevState.board[move.to.top][move.to.left] =
           prevState.board[move.from.top][move.from.left];
         prevState.board[move.from.top][move.from.left] = "";
 
         //  queen takes pawn - convert captured piece to queens guard
+        //  TODO: maybe check if yellow square is taken?
         if (queenPawnTake) {
           prevState.board[5][5] = "yG";
         }
 
-        //  turn
-        const nextTurn = (() => {
-          switch (prevState.playerTurn) {
-            case "w":
-              return "r";
-            case "r":
-              return "b";
-            case "b":
-              return "g";
-            case "g":
-              return "y";
-            case "y":
-              return "w";
-            default:
-              throw new Error("This should not have happend!");
-          }
-        })();
         return {
           board: prevState.board,
-          playerTurn: nextTurn,
+          playerTurn: Game.nextPlayerTurn(prevState.playerTurn, prevState),
           moves: [...prevState.moves, chessNotation],
         } as GameState;
       },
@@ -258,5 +245,35 @@ export class Game {
       throw new Error("Can not move other player pieces");
     }
     //  TODO: check get Possible Moves
+  }
+
+  public static isPlayerInGame(player: Player, state: GameState) {
+    return state.board.find((row) =>
+      row.find((col) => col && col[0] === player)
+    );
+  }
+
+  public static nextPlayerTurn(currentPlayer: Player, state: GameState) {
+    function rotatePlayer(player: Player): Player {
+      switch (player) {
+        case "w":
+          return "r";
+        case "r":
+          return "b";
+        case "b":
+          return "g";
+        case "g":
+          return "y";
+        case "y":
+          return "w";
+        default:
+          throw new Error("This should not have happend!");
+      }
+    }
+    let nextTurnPlayer = rotatePlayer(currentPlayer)
+    while (!Game.isPlayerInGame(nextTurnPlayer, state)) {
+      nextTurnPlayer = rotatePlayer(nextTurnPlayer)
+    }
+    return nextTurnPlayer
   }
 }
