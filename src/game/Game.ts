@@ -59,6 +59,7 @@ export type Position = {
 export type GameMove = {
   from: Position;
   to: Position;
+  promotion?: string;
 };
 
 export type GameHistory = GameMove[];
@@ -80,6 +81,109 @@ export class Game {
 
   public on<E extends keyof GameEvents>(event: E, callback: GameEvents[E]) {
     return this.emitter.on(event, callback);
+  }
+
+  public getHistory(): GameHistory {
+    return this.history;
+  }
+
+  public getState(): GameState {
+    const initialState: GameState = {
+      board: [
+        ["", "", "", "wR", "wN", "wK", "wB", "wR", "", "", ""],
+        ["", "", "", "wP", "wP", "wP", "wP", "wP", "", "", ""],
+        ["", "", "", "", "", "", "", "", "", "", ""],
+        ["gR", "gP", "", "", "", "", "", "", "", "rP", "rR"],
+        ["gB", "gP", "", "", "", "yG", "", "", "", "rP", "rN"],
+        ["gK", "gP", "", "", "yG", "yQ", "yG", "", "", "rP", "rK"],
+        ["gN", "gP", "", "", "", "yG", "", "", "", "rP", "rB"],
+        ["gR", "gP", "", "", "", "", "", "", "", "rP", "rR"],
+        ["", "", "", "", "", "", "", "", "", "", ""],
+        ["", "", "", "bP", "bP", "bP", "bP", "bP", "", "", ""],
+        ["", "", "", "bR", "bB", "bK", "bN", "bR", "", "", ""],
+      ],
+      playerTurn: "w",
+      moves: [],
+    };
+
+    return this.history.reduce(
+      (prevState: GameState, move: GameMove, moveCount: number) => {
+        Game.validateMove(move, prevState);
+        const chessNotation = Game.moveInChessNotation(move, prevState);
+
+        //  queen takes
+        //  captured piece is converted to queen's guard and moved to yellow square
+        const queenPawnTake =
+          prevState.board[move.from.top][move.from.left][1] === "Q" &&
+          prevState.board[move.to.top][move.to.left][1] !== "";
+
+        //  player lost - king/queen taken
+        const kingIsTaken =
+          prevState.board[move.to.top][move.to.left][1] === "K";
+        const queenIsTaken =
+          prevState.board[move.to.top][move.to.left][1] === "Q";
+        const playerLost =
+          kingIsTaken || queenIsTaken
+            ? prevState.board[move.to.top][move.to.left][0]
+            : false;
+        const movedPiece = prevState.board[move.from.top][move.from.left];
+
+        const nextStateBoard =
+          //  queen takes
+          prevState.board
+            .map((row, rowIndex) =>
+              row.map((col, colIndex) => {
+                if (rowIndex === 5 && colIndex === 5 && queenPawnTake) {
+                  return "yG";
+                }
+                return col;
+              })
+            )
+            //  player lost
+            .map((row) =>
+              row.map((col) => {
+                if (playerLost && col[0] === playerLost) {
+                  return "";
+                }
+                return col;
+              })
+            )
+            //  move
+            .map((row, rowIndex) =>
+              row.map((col, colIndex) => {
+                if (rowIndex === move.from.top && colIndex === move.from.left) {
+                  return "";
+                }
+                if (rowIndex === move.to.top && colIndex === move.to.left) {
+                  return movedPiece;
+                }
+                return col;
+              })
+            )
+            //  promotion
+            .map((row, rowIndex) =>
+              row.map((col, colIndex) => {
+                if (rowIndex === move.to.top && colIndex === move.to.left && Game.isPromotionMove(move, prevState)) {
+                  return move.promotion ? prevState.playerTurn + move.promotion : prevState.playerTurn + 'R';
+                }
+                return col;
+              })
+            );
+
+        return {
+          board: nextStateBoard,
+          playerTurn: Game.nextPlayerTurn(prevState.playerTurn, prevState),
+          moves: [...prevState.moves, chessNotation],
+        } as GameState;
+      },
+      initialState
+    );
+  }
+
+  public makeMove(move: GameMove) {
+    Game.validateMove(move, this.getState());
+    this.history.push(move);
+    this.emitter.emit("move", move);
   }
 
   public static getPossibleMoves(
@@ -143,93 +247,6 @@ export class Game {
     return GameBoard[top][left];
   }
 
-  public getHistory(): GameHistory {
-    return this.history;
-  }
-
-  public getState(): GameState {
-    const initialState: GameState = {
-      board: [
-        ["", "", "", "wR", "wN", "wK", "wB", "wR", "", "", ""],
-        ["", "", "", "wP", "wP", "wP", "wP", "wP", "", "", ""],
-        ["", "", "", "", "", "", "", "", "", "", ""],
-        ["gR", "gP", "", "", "", "", "", "", "", "rP", "rR"],
-        ["gB", "gP", "", "", "", "yG", "", "", "", "rP", "rN"],
-        ["gK", "gP", "", "", "yG", "yQ", "yG", "", "", "rP", "rK"],
-        ["gN", "gP", "", "", "", "yG", "", "", "", "rP", "rB"],
-        ["gR", "gP", "", "", "", "", "", "", "", "rP", "rR"],
-        ["", "", "", "", "", "", "", "", "", "", ""],
-        ["", "", "", "bP", "bP", "bP", "bP", "bP", "", "", ""],
-        ["", "", "", "bR", "bB", "bK", "bN", "bR", "", "", ""],
-      ],
-      playerTurn: "w",
-      moves: [],
-    };
-
-    return this.history.reduce(
-      (prevState: GameState, move: GameMove, moveCount: number) => {
-        Game.validateMove(move, prevState);
-        const chessNotation = Game.moveInChessNotation(move, prevState);
-
-        //  queen takes
-        //  captured piece is converted to queen's guard and moved to yellow square
-        const queenPawnTake =
-          prevState.board[move.from.top][move.from.left][1] === "Q" &&
-          prevState.board[move.to.top][move.to.left][1] !== "";
-
-        const kingIsTaken =
-          prevState.board[move.to.top][move.to.left][1] === "K";
-        const queenIsTaken =
-          prevState.board[move.to.top][move.to.left][1] === "Q";
-        const playerLost =
-          kingIsTaken || queenIsTaken
-            ? prevState.board[move.to.top][move.to.left][0]
-            : false;
-        const movedPiece = prevState.board[move.from.top][move.from.left];
-
-        const nextStateBoard =
-          //  queen takes
-          prevState.board
-            .map((row, rowIndex) =>
-              row.map((col, colIndex) => {
-                if (rowIndex === 5 && colIndex === 5 && queenPawnTake) {
-                  return "yG";
-                }
-                return col;
-              })
-            )
-            //  player lost
-            .map((row) =>
-              row.map((col) => {
-                if (playerLost && col[0] === playerLost) {
-                  return "";
-                }
-                return col;
-              })
-            )
-            //  move
-            .map((row, rowIndex) =>
-              row.map((col, colIndex) => {
-                if (rowIndex === move.from.top && colIndex === move.from.left) {
-                  return "";
-                }
-                if (rowIndex === move.to.top && colIndex === move.to.left) {
-                  return movedPiece;
-                }
-                return col;
-              })
-            );
-
-        return {
-          board: nextStateBoard,
-          playerTurn: Game.nextPlayerTurn(prevState.playerTurn, prevState),
-          moves: [...prevState.moves, chessNotation],
-        } as GameState;
-      },
-      initialState
-    );
-  }
-
   public static moveInChessNotation(move: GameMove, state: GameState) {
     const piece = state.board[move.from.top][move.from.left];
     //  TODO: figure taken
@@ -241,12 +258,6 @@ export class Game {
       String.fromCharCode(94 + move.to.left) +
       (state.board.length - move.to.top)
     );
-  }
-
-  public makeMove(move: GameMove) {
-    Game.validateMove(move, this.getState());
-    this.history.push(move);
-    this.emitter.emit("move", move);
   }
 
   public static validateMove(move: GameMove, state: GameState) {
@@ -266,6 +277,30 @@ export class Game {
     return state.board.find((row) =>
       row.find((col) => col && col[0] === player)
     );
+  }
+
+  public static isPromotionMove(move: GameMove, state: GameState) {
+    const piece = Game.getSquarePiece(move.from, state);
+    if (piece[1] !== "P") {
+      return false;
+    }
+    switch (piece[0]) {
+      case "w": {
+        return move.from.top === 9 && move.to.top === 10;
+      }
+      case "r": {
+        return move.from.left === 1 && move.to.left === 0;
+      }
+      case "b": {
+        return move.from.top === 1 && move.to.top === 0;
+      }
+      case "g": {
+        return move.from.left === 9 && move.to.left === 10;
+      }
+      default: {
+        throw new Error(`Invalid player ${piece[0]}`);
+      }
+    }
   }
 
   public static nextPlayerTurn(currentPlayer: Player, state: GameState) {
